@@ -38,6 +38,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     #my apps
     'accounts',
+    'picture',
 
     # django apps
     'django.contrib.admin',
@@ -150,7 +151,7 @@ DJOSER = {
     'SERIALIZERS': {
         # 'user_create': DEFAULT_USER_SERIALIZER,  # checked
         # 'user': DEFAULT_USER_SERIALIZER,  # checked
-        # 'current_user': DEFAULT_USER_SERIALIZER,  # checked
+        'current_user': 'accounts.serializers.UserSerializer',  # checked
         # 'activation': 'djoser.serializers.ActivationSerializer',  # checked
         # 'password_reset': 'djoser.serializers.SendEmailResetSerializer', # checked
         # 'password_reset_confirm': 'djoser.serializers.PasswordResetConfirmSerializer', # checked
@@ -233,3 +234,7 @@ if DEBUG:
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+API_VERSION = 'v1'
+API_URL = 'api/%s/' % API_VERSION
