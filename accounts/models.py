@@ -7,6 +7,7 @@ from django.contrib.auth.models import UserManager as DefaultUserManager, Abstra
 
 class UserManager(DefaultUserManager):
 
+
     def _create_user(self, username, email, password, **extra_fields):
         user = self.model(username=username, email=self.normalize_email(email), **extra_fields)
         user.set_password(password)

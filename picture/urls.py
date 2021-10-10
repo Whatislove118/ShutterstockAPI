@@ -20,4 +20,5 @@ urlpatterns = [
     path('all/', list_picture, name='list-picture'),
     path('<int:id>/', retrieve_update_delete_picture, name='retrieve-picture'),
     path('', create_picture, name='create-picture'),
+    # path('test/', func)
 ]
