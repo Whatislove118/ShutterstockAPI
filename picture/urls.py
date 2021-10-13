@@ -3,6 +3,8 @@ from django.urls import path
 
 from picture.views import PictureViewSet
 
+app_name = 'picture'
+
 retrieve_update_delete_picture = PictureViewSet.as_view({
     'get': 'retrieve',
     'patch': 'partial_update',

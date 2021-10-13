@@ -23,6 +23,7 @@ api_url = 'api'
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-auth/', include('accounts.urls')),
-    path(settings.API_URL + 'picture/', include('picture.urls'))
+    path(settings.API_URL + 'picture/', include('picture.urls', namespace='picture')),
+    path(settings.API_URL + 'album/', include('album.urls', namespace='album')),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

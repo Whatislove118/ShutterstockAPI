@@ -6,7 +6,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, permissions
 from picture.models import Picture
 from picture.serializers import PictureSerializer
-from . import filters
+from . import utils
 from .permissions import IsResourceOwner
 
 
@@ -17,12 +17,11 @@ class PictureViewSet(viewsets.ModelViewSet):
     lookup_field = 'id'
     serializer_class = PictureSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_class = filters.SearchFilter
+    filterset_class = utils.SearchFilter
     # filterset_fields = ['category']
 
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
-
 
     def get_permissions(self):
         if self.action == 'create':
@@ -37,22 +36,25 @@ class PictureViewSet(viewsets.ModelViewSet):
         serializer.save(user=user)
 
     def get_object(self, **kwargs):
-        print(self.kwargs.get(self.lookup_field))
+        # print(self.kwargs.get(self.lookup_field))
         print('get_object')
-        return super().get_object()
+        obj = super().get_object()
+        return obj
+
+    # def get_serializer_class(self):
+    #     if self.action == 'create':
+    #         self.serializer_class = PictureCreateSerializer
+    #     return super().get_serializer_class()
 
     # def filter_queryset(self, queryset):
     #     print('filter_queryset')
-    #     query = self.request.GET.get('q')
-    #     if self.action == 'list' and query is not None:
-    #         print('filtering')
-    #         queryset = self.queryset.filter(Q(name__icontains=query))
-    #         super().get_queryset()
-    #     return super().filter_queryset(queryset)
+    #     queryset = super().filter_queryset(queryset)
+    #     print([p.picture_info.width for p in queryset.all()])
+    #     return queryset
 
 
     # def get_queryset(self):
-    #     print("get_queryset")
+    #
     #     return self.queryset
 
 

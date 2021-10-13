@@ -1,13 +1,29 @@
 from djoser.serializers import UserCreateSerializer
 from rest_framework import serializers
 
-from picture.models import Picture, PictureCategory
+from album.models import Album
+from album.serializers import AlbumSerializer
+from picture.models import Picture, PictureCategory, PictureInfo
+from picture.utils import format_bytes
+
+
+class PictureInfoSerializer(serializers.ModelSerializer):
+    size = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = PictureInfo
+        # fields = '__all__'
+        exclude = ['picture']
+
+    def get_size(self, obj):
+        return format_bytes(obj.size)
 
 
 class PictureSerializer(serializers.ModelSerializer):
     # likes = serializers.DecimalField(read_only=True, max_digits=10, decimal_places=2)
     category = serializers.SlugRelatedField(many=False, read_only=False, queryset=PictureCategory.objects.all(), slug_field='name')
-
+    picture_info = PictureInfoSerializer(read_only=True, many=False)
+    album = serializers.HyperlinkedRelatedField(many=True, read_only=True, view_name='album:retrieve-update-destroy-album', lookup_field='id')
 
     class Meta:
         model = Picture
@@ -38,5 +54,19 @@ class PictureSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
+# class PictureCreateSerializer(PictureSerializer):
+#     album = serializers.PrimaryKeyRelatedField(many=False, write_only=True, queryset=Album.objects.all())
+#
+#     class Meta(PictureSerializer.Meta):
+#         pass
+
+    # #TODO вынести в другой класс + транзакция
+    # def create(self, validated_data):
+    #     album_from_request = validated_data.pop('album')
+    #     picture = super().create(validated_data)
+    #     picture.album.add(album_from_request)
+    #     picture.save()
+    #     print(picture.picture_album)
+    #     return picture
 
 
