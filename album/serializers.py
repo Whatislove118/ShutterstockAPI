@@ -23,6 +23,7 @@ class AddImagesSerializer(AlbumSerializer):
         fields = None
         exclude = ['name']
 
+    # TODO попробовать вынести логику
     def save(self, **kwargs):
         album = kwargs.pop('album')
         pictures = self.validated_data.pop('album_pictures')

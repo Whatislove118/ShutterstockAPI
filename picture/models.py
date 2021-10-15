@@ -44,6 +44,7 @@ class PictureManager(models.Manager):
 
 
 
+
 # важное замечание - blank - по сути указывает будет ли обязательным внутри кода django, null - на уровне бд
 class Picture(models.Model):
     name = models.CharField(max_length=255, blank=False)
