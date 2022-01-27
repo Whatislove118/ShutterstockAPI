@@ -1,11 +1,17 @@
 from datetime import datetime
+from enum import unique
 
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import Manager, F
+from django.dispatch import receiver
+from django.db.models.signals import post_delete, post_save
 from rest_framework.reverse import reverse
 
+
 from album.models import Album, AlbumPicture
+
+
 
 User = get_user_model()
 
@@ -40,26 +46,27 @@ class PictureManager(models.Manager):
         return self.transform_width_height(id)
 
 
-
-
-
-
+def generate_upload_url(instance, filename):
+    return "%s/%s/%s" % (instance.user.username, instance.name, filename)
 
 # важное замечание - blank - по сути указывает будет ли обязательным внутри кода django, null - на уровне бд
 class Picture(models.Model):
     name = models.CharField(max_length=255, blank=False)
     user = models.ForeignKey(User,  related_name='user_picture', null=False, on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='media')
+    image = models.ImageField(upload_to=generate_upload_url, unique=True)
     date_of_published = models.DateTimeField(blank=False, default=datetime.now())
     likes = models.PositiveIntegerField(null=False, blank=False, default=0)
     album = models.ManyToManyField(Album, through=AlbumPicture, related_name='album_pictures', blank=True)
-    category = models.ForeignKey('PictureCategory', blank=False, null=False, on_delete=models.DO_NOTHING)
+    category = models.CharField(max_length=255, blank=False, choices=PictureCategoryChoices.choices, null=False)
+    is_notify = models.BooleanField(default=False)
 
     objects = PictureManager()
-
-    def get_absolute_url(self):
-        return reverse('retrieve-update-destroy-picture', kwargs={'id': self.id})
-
+    
+    
+    def like(self):
+        self.likes += 1
+        self.save(update_fields=['likes'])
+    
     def __str__(self):
         return self.name
 
@@ -68,25 +75,16 @@ class Picture(models.Model):
         db_table = 'picture'
 
 
-class PictureExtensionsChoices(models.TextChoices):
-    JPEG = 'JPEG', 'jpeg'
-    PNG = 'PNG', 'png'
-    SVG = 'SVG', 'svg'
-
-
 class PictureInfo(models.Model):
-    picture = models.OneToOneField('picture.Picture', related_name='picture_info', blank=False, null=False, on_delete=models.CASCADE)
-    width = models.PositiveIntegerField(default=0, blank=False)
-    height = models.PositiveIntegerField(default=0, blank=False)
-    extension = models.CharField(max_length=100, choices=PictureExtensionsChoices.choices, blank=False)
+    picture = models.OneToOneField('picture.Picture', related_name='picture_info', to_field='image', blank=False, null=False, unique=True, on_delete=models.CASCADE)
+    extension = models.CharField(max_length=100, blank=False)
     size = models.PositiveBigIntegerField(default=0)
 
     class Meta:
         db_table = 'picture_info'
-        constraints = [
-            models.CheckConstraint(
-                name='%(app_label)s_%(class)s_extension_invalid',
-                check=models.Q(extension__in=PictureExtensionsChoices.values)
-            )
-        ]
+        
+
+
+
+
 

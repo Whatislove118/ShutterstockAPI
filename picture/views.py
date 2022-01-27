@@ -1,14 +1,19 @@
 # from django_filters import rest_framework as filters
-from django.db.models import Q
+
 
 # Create your views here.
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, permissions
+from rest_framework.decorators import parser_classes, renderer_classes
 from picture.models import Picture
 from picture.serializers import PictureSerializer
+from rest_framework.decorators import action
+from rest_framework.parsers import MultiPartParser
 from . import utils
 from .permissions import IsResourceOwner
-
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .tasks import send_message
 
 class PictureViewSet(viewsets.ModelViewSet):
     model = Picture
@@ -18,15 +23,16 @@ class PictureViewSet(viewsets.ModelViewSet):
     serializer_class = PictureSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = utils.SearchFilter
+    parser_classes = [MultiPartParser]
     # filterset_fields = ['category']
 
-    def create(self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs):        
         return super().create(request, *args, **kwargs)
 
     def get_permissions(self):
-        if self.action == 'create':
+        if self.action in ('create', 'like'):
             self.permission_classes = [permissions.IsAuthenticated]
-        if self.action == 'update' or self.action == 'destroy' or self.action == 'partial_update':
+        if self.action in ('update', 'destroy', 'partial_updae'):
             self.permission_classes = [IsResourceOwner]
         return super().get_permissions()
 
@@ -41,6 +47,12 @@ class PictureViewSet(viewsets.ModelViewSet):
         obj = super().get_object()
         return obj
 
+    @action(methods=['POST'], detail=True)
+    def like(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # instance.like()
+        send_message(instance.id)
+        return Response({'detail': 'ok.'})
     # def get_serializer_class(self):
     #     if self.action == 'create':
     #         self.serializer_class = PictureCreateSerializer
@@ -60,3 +72,9 @@ class PictureViewSet(viewsets.ModelViewSet):
 
 
 
+@api_view(["GET"])
+def health(request):
+    if request.method == 'GET':
+        instance = Picture.objects.get(id=4)
+        utils.get_metadata_from_s3(instance)
+        return Response({"detail": "ok"})

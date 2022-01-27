@@ -17,13 +17,12 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
-
-api_url = 'api'
+from picture.views import health
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api-auth/', include('accounts.urls')),
-    path(settings.API_URL + 'picture/', include('picture.urls', namespace='picture')),
-    path(settings.API_URL + 'album/', include('album.urls', namespace='album')),
-
+    path('api/auth/', include('accounts.urls')),
+    path(settings.API_URL + 'pictures/', include('picture.urls', namespace='picture')),
+    path(settings.API_URL + 'albums/', include('album.urls', namespace='album')),
+    path('health/', health, name='health-check'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

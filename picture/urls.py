@@ -1,5 +1,6 @@
 from django.conf.urls import url
 from django.urls import path
+from picture.models import Picture
 
 from picture.views import PictureViewSet
 
@@ -11,16 +12,20 @@ retrieve_update_delete_picture = PictureViewSet.as_view({
     'put': 'update',
     'delete': 'destroy'
 })
-create_picture = PictureViewSet.as_view({
-    'post': 'create'
-})
-list_picture = PictureViewSet.as_view({
-    'get': 'list'
+
+list_create_picture = PictureViewSet.as_view({
+    'post': 'create',
+    'get': 'list',
 })
 
+
 urlpatterns = [
-    path('all/', list_picture, name='list-picture'),
+    path('', list_create_picture, name='list-picture'),
     path('<int:id>/', retrieve_update_delete_picture, name='retrieve-picture'),
-    path('', create_picture, name='create-picture'),
+    path('<int:id>/like/', PictureViewSet.as_view(
+        {
+            'post': 'like'
+        }
+    ), name='like=picture')
     # path('test/', func)
 ]

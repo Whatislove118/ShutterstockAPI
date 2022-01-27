@@ -1,13 +1,33 @@
 import os
+from pydoc import cli
+from re import I
 
 from PIL import Image
 from django.db.models import F
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django_filters import rest_framework as django_filters
-
+from rest_framework.views import exception_handler
 from picture.models import Picture, PictureCategory, PictureInfo
+from root import settings
+from django.db import IntegrityError
+from rest_framework.response import Response
+from rest_framework import status
 
+def custom_exception_handler(exc, context):
+    response = exception_handler(exc, context)
+    
+    if isinstance(exc, IntegrityError) and not response:
+        response = Response(
+            {
+                'detail': 'It seems there is a conflict between the data you are trying to save and your current ' \
+                           'data. Please review your entries and try again.'
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    return response
+        
 
 def transform_width_height(queryset, measurement='px'):
     if measurement == 'cm':
@@ -48,20 +68,18 @@ class SearchFilter(django_filters.FilterSet):
         fields = ['q', 'category', 'sort', 'measurement', 'min_width', 'min_height']
 
 
-@receiver(post_save, sender=Picture, dispatch_uid='create_picture_info_uid')
-def create_picture_info_signal(sender, instance, created, **kwargs):
-    data = _generate_data_for_picture_info(instance)
-    picture_info = PictureInfo.objects.get_or_create(**data)
-    # print(picture_info.picture_id)
-
-def _generate_data_for_picture_info(instance):
-    image = Image.open(instance.image.path)
+def get_metadata_from_s3(instance, bucket_name=settings.AWS_STORAGE_BUCKET_NAME):
+    import boto3
+    
+    client = boto3.client('s3')
+    try:
+        metadata = client.head_object(Bucket=bucket_name, Key=instance.image.name)
+    except:
+        print("Failed {}".format(instance.image.name))
     data = {
         'picture': instance,
-        'size': os.stat(instance.image.path).st_size,  # ????
-        'width': image.width,
-        'height': image.height,
-        'extension': image.format
+        'size': metadata.get('ContentLength'),
+        'extension': metadata.get('ContentType')
     }
     return data
 
@@ -76,3 +94,15 @@ def format_bytes(size, round_count=2):
 
 
 
+@receiver(post_delete, sender=Picture, dispatch_uid='rm_picture_from_s3')
+def remove_image_s3(sender, instance, **kwargs):
+    try:
+        instance.image.storage.delete()
+    except:
+        pass
+
+@receiver(post_save, sender=Picture, dispatch_uid='create_picture_info_uid')
+def create_picture_info_signal(sender, instance, created, **kwargs):
+    if created:
+        data = get_metadata_from_s3(instance)
+        PictureInfo.objects.create(**data)

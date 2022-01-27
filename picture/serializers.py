@@ -21,10 +21,11 @@ class PictureInfoSerializer(serializers.ModelSerializer):
 
 class PictureSerializer(serializers.ModelSerializer):
     # likes = serializers.DecimalField(read_only=True, max_digits=10, decimal_places=2)
-    category = serializers.SlugRelatedField(many=False, read_only=False, queryset=PictureCategory.objects.all(), slug_field='name')
+    # category = serializers.SlugRelatedField(many=False, read_only=False, queryset=PictureCategory.objects.all(), slug_field='name')
     picture_info = PictureInfoSerializer(read_only=True, many=False)
     album = serializers.HyperlinkedRelatedField(many=True, read_only=True, view_name='album:retrieve-update-destroy-album', lookup_field='id')
-
+    image = serializers.ImageField(max_length=None)
+    
     class Meta:
         model = Picture
         fields = '__all__'

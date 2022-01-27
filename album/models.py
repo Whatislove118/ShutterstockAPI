@@ -17,7 +17,6 @@ class AlbumManager(Manager):
         return queryset.all()
 
 
-# Create your models here.
 class Album(models.Model):
     name = models.CharField(max_length=200, blank=False, null=False)
     user = models.ForeignKey(User, blank=False, null=False, on_delete=models.CASCADE)
