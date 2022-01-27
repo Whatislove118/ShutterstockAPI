@@ -271,7 +271,7 @@ CELERY_TASK_SERIALIZER = 'json'
 
 
 # REDIS
-REDIS_HOST = '127.0.0.1'
+REDIS_HOST = os.getenv("REDIS_HOST", '127.0.0.1')
 
 # STATICFILES_STORAGE = 'storages.backends.s3boto3.S3StaticStorage'
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
